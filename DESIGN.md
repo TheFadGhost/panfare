@@ -40,7 +40,7 @@ Spacing scale (single rhythm, px): 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64. C
 ```
 
 - `qty`: right-aligned, fixed 5ch track, tabular numerals. Ranges render “2–3”.
-- `unit`: lowercase, never pluralised oddly (“tbsp”, “cups” pluralised only when value ≠ 1).
+- `unit`: lowercase, never pluralised oddly (“tbsp”, “cups” pluralised only when value > 1).
 - `item` carries the food name; `preparation` follows after an em-dash in muted italics
   (“plain flour — sifted”). Optional substitution notes sit on a second indented line,
   prefixed “or ”, still muted.
@@ -122,6 +122,10 @@ module feeds automated WCAG-ratio tests):
 | warn-bg / warn-text | #F6EBD4 / #6B4A12 | #3A2F1B / #EFC983 | #40331A / #FFD98A |
 | ok | #3E6B4F | #7FB894 | #8FE0AC |
 | danger | #A03123 | #E77A67 | #FF9E8A |
+| focusRing (= accent per theme) | #A64B22 | #E8946A | #FFB65C |
+
+Focus-ring contrast vs paper: light 5.34:1, dark 7.47:1, cook 10.94:1 — all pass the 3:1
+non-text requirement.
 
 Rules: AA (4.5:1) for all text roles including muted preparation text in **every** theme;
 accent-on-paper and on-accent pairs verified too. A test computes ratios from the same token

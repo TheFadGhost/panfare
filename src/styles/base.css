@@ -1,0 +1,748 @@
+/* ============================================================================
+   Panfare — base.css
+   ----------------------------------------------------------------------------
+   Consumes theme tokens injected by src/styles/tokens.mjs as --pf-*
+   custom properties on <html>. Every colour reference goes through
+   var(--pf-<role>, <light literal>) where the fallback matches THEMES.light,
+   so the page renders correctly before JS runs and re-themes instantly after.
+
+   Design law lives in DESIGN.md: warm paper ground, hairline rules instead of
+   shadows, one warm accent used sparingly, spacing snapped to the rhythm
+   4 · 8 · 12 · 16 · 24 · 32 · 48 · 64. No gradients, no glass, no coloured
+   shadows — focus uses outline only.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap");
+
+/* ---------------------------------------------------------------------------
+   1. Font stacks (static, not theme-dependent)
+   ------------------------------------------------------------------------- */
+
+:root {
+  /* Display serif: Fraunces (opsz axis), Georgia/serif offline fallback. */
+  --pf-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  /* Body/UI sans: crisp at kitchen distances. */
+  --pf-font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Reset
+   ------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+ul[class],
+ol[class] {
+  list-style: none;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   3. Base document
+   ------------------------------------------------------------------------- */
+
+html {
+  background: var(--pf-paper, #faf6ef);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--pf-paper, #faf6ef);
+  color: var(--pf-ink, #26221c);
+  font-family: var(--pf-font-body);
+  font-size: var(--pf-font-size-body, 17px);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--pf-font-display);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+/* Recipe title scale from DESIGN.md typography table. */
+h1 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+
+a {
+  color: var(--pf-accent, #a64b22);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+::selection {
+  background: var(--pf-accent, #a64b22);
+  color: var(--pf-on-accent, #ffffff);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--pf-line, #e4dcce);
+}
+
+code,
+kbd {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--pf-surface, #ffffff);
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ---------------------------------------------------------------------------
+   4. Focus — always visible, accent outline, never removed
+   ------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--pf-focus-ring, #a64b22);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   5. Buttons and segmented control
+   ------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--pf-min-touch-target, 48px);
+  padding: 0 16px;
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 6px;
+  background: var(--pf-surface, #ffffff);
+  color: var(--pf-ink, #26221c);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.btn:hover {
+  background: color-mix(in srgb, var(--pf-accent, #a64b22) 8%, transparent);
+  border-color: var(--pf-accent, #a64b22);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--pf-accent, #a64b22);
+  border-color: var(--pf-accent, #a64b22);
+  color: var(--pf-on-accent, #ffffff);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--pf-accent, #a64b22) 90%, black);
+  border-color: color-mix(in srgb, var(--pf-accent, #a64b22) 90%, black);
+  color: var(--pf-on-accent, #ffffff);
+}
+
+/* Segmented quick-scale control: joined factor buttons ½ ⅔ ¾ 1 1½ 2 3.
+   The active segment is marked with aria-pressed="true". */
+.segmented {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 8px;
+  background: var(--pf-surface, #ffffff);
+}
+
+.segmented button {
+  min-height: var(--pf-min-touch-target, 48px);
+  min-width: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-left: 1px solid var(--pf-line, #e4dcce);
+  background: transparent;
+  color: var(--pf-ink, #26221c);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.segmented button:first-child {
+  border-left: 0;
+}
+
+.segmented button:hover {
+  background: color-mix(in srgb, var(--pf-accent, #a64b22) 10%, transparent);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--pf-accent, #a64b22);
+  color: var(--pf-on-accent, #ffffff);
+}
+
+/* ---------------------------------------------------------------------------
+   6. Inputs
+   ------------------------------------------------------------------------- */
+
+input[type="text"],
+input[type="search"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  min-height: var(--pf-min-touch-target, 48px);
+  padding: 8px 12px;
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 6px;
+  background: var(--pf-surface, #ffffff);
+  color: var(--pf-ink, #26221c);
+  transition: border-color 150ms ease-out;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+select {
+  /* Native picker arrow kept (drawing one would need gradients or hardcoded
+     SVG ink); colours still come from tokens. */
+  padding-right: 40px;
+}
+
+::placeholder {
+  color: var(--pf-ink-muted, #5d564a);
+  opacity: 1;
+}
+
+input[disabled],
+textarea[disabled],
+select[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Form validation per DESIGN.md states: message beside the field, wired via
+   aria-describedby; focus moves to the first errored field. */
+.field {
+  margin-bottom: 16px;
+}
+
+.field > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.field-message {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: var(--pf-danger, #a03123);
+}
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: var(--pf-ink-muted, #5d564a);
+}
+
+/* ---------------------------------------------------------------------------
+   7. Ingredient rows — three-column grid [ qty ][ unit ][ item — prep ]
+   Grid tracks are fixed so alignment holds with pathological inputs;
+   text wraps inside the item column only.
+   ------------------------------------------------------------------------- */
+
+.ingredients {
+  margin: 0;
+}
+
+.ingredient-row {
+  display: grid;
+  grid-template-columns: 5ch 9ch 1fr;
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.ingredient-row .qty {
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ingredient-row .unit {
+  text-transform: lowercase;
+}
+
+/* Preparation text follows the food name after an em-dash: muted italics,
+   smaller, AA-verified in every theme via inkMuted. */
+.prep {
+  color: var(--pf-ink-muted, #5d564a);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+/* Substitution note ("or margarine") sits on a second indented line. */
+.ingredient-sub {
+  grid-column: 3;
+  padding-left: 1.5ch;
+  color: var(--pf-ink-muted, #5d564a);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+/* ---------------------------------------------------------------------------
+   8. Vulgar fractions — stacked sup ⁄ sub at 0.72em, baseline aligned so the
+   line height does not jump (DESIGN.md rendering order rules live in JS).
+   ------------------------------------------------------------------------- */
+
+.frac {
+  white-space: nowrap;
+}
+
+.frac sup,
+.frac sub {
+  position: static;
+  font-size: 0.72em;
+  line-height: 1;
+}
+
+.frac sup {
+  vertical-align: 0.55em;
+}
+
+.frac sub {
+  vertical-align: -0.3em;
+}
+
+/* ---------------------------------------------------------------------------
+   9. Method steps — <ol> counter as a Fraunces numeral in its own left
+   column (hanging indent), step text in the main measure.
+   ------------------------------------------------------------------------- */
+
+.steps {
+  counter-reset: pf-step;
+  margin: 0;
+}
+
+.steps > li {
+  counter-increment: pf-step;
+  position: relative;
+  padding-left: 48px;
+  max-width: 68ch;
+  font-size: 18px;
+  line-height: 1.65;
+  padding-block-end: 16px;
+}
+
+.steps > li::before {
+  content: counter(pf-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  text-align: right;
+  font-family: var(--pf-font-display);
+  font-weight: 500;
+  font-size: 1.25em;
+  line-height: inherit;
+  color: var(--pf-accent, #a64b22);
+}
+
+/* Embedded quantities that react to scaling: very quiet accent tint plus a
+   dotted underline — visible on inspection, invisible while reading. */
+.scaled-qty {
+  padding: 0 2px;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--pf-accent, #a64b22) 12%, transparent);
+  text-decoration: underline dotted 1px;
+  text-decoration-color: color-mix(in srgb, var(--pf-accent, #a64b22) 60%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   10. Margin notes and banners — calm, never modal, never blocking
+   ------------------------------------------------------------------------- */
+
+/* Non-linear scaling warning: a pencil note in the margin, amber, bordered
+   left. Never red, never an alert dialog. */
+.warn-panel {
+  max-width: 68ch;
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 4px solid var(--pf-warn-text, #6b4a12);
+  border-radius: 0 6px 6px 0;
+  background: var(--pf-warn-bg, #f6ebd4);
+  color: var(--pf-warn-text, #6b4a12);
+  font-size: 0.9em;
+  line-height: 1.55;
+}
+
+.warn-panel ul {
+  margin: 8px 0 0;
+  padding-left: 1.25em;
+}
+
+/* Inline error banner rendered above content: danger-bordered, one plain
+   sentence + concrete next step + Retry. Errors never wipe entered data. */
+.banner-error {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--pf-danger, #a03123) 45%, transparent);
+  border-left-width: 4px;
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--pf-danger, #a03123) 8%, var(--pf-surface, #ffffff));
+  color: var(--pf-danger, #a03123);
+  line-height: 1.55;
+}
+
+.banner-error strong {
+  font-weight: 600;
+}
+
+.banner-error .btn {
+  margin-top: 12px;
+  border-color: color-mix(in srgb, var(--pf-danger, #a03123) 45%, transparent);
+}
+
+.banner-error .btn:hover {
+  border-color: var(--pf-danger, #a03123);
+}
+
+/* Quiet reason chip for deliberately kept-separate list items
+   ("kept separate — different preparation"). */
+.chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 999px;
+  color: var(--pf-ink-muted, #5d564a);
+  font-size: 0.78em;
+  font-style: normal;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   11. Shopping-list check rows — real checkbox inputs (semantics per
+   DESIGN.md), drawn as a 28px square with a thick check stroke inside a
+   ≥48px hit area provided by the row/label itself. Checked state strikes
+   through and dims the name; the row stays put (no reflow while shopping).
+   ------------------------------------------------------------------------- */
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--pf-min-touch-target, 48px);
+  padding: 0;
+  cursor: pointer;
+}
+
+.list-item input[type="checkbox"] {
+  appearance: none;
+  align-self: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 10px 0;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--pf-ink-muted, #5d564a);
+  border-radius: 6px;
+  background: var(--pf-surface, #ffffff);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+/* Thick check stroke drawn with rotated borders — prints cleanly too. */
+.list-item input[type="checkbox"]::before {
+  content: "";
+  width: 15px;
+  height: 8px;
+  margin-top: -3px;
+  border-left: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  transform: rotate(-45deg);
+}
+
+.list-item input[type="checkbox"]:checked {
+  border-color: var(--pf-ok, #3e6b4f);
+}
+
+.list-item input[type="checkbox"]:checked::before {
+  border-left-color: var(--pf-ok, #3e6b4f);
+  border-bottom-color: var(--pf-ok, #3e6b4f);
+}
+
+.list-item__name {
+  font-weight: 500;
+  transition: color 120ms ease-out;
+}
+
+.list-item:has(input:checked) .list-item__name {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--pf-ink-muted, #5d564a);
+}
+
+.list-item__meta {
+  display: block;
+  color: var(--pf-ink-muted, #5d564a);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+/* ---------------------------------------------------------------------------
+   12. Section headings — small-caps letterspaced labels
+   ------------------------------------------------------------------------- */
+
+.section-heading {
+  margin: 32px 0 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--pf-line, #e4dcce);
+  font-family: var(--pf-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pf-ink, #26221c);
+}
+
+.section-heading .count {
+  margin-left: 8px;
+  color: var(--pf-ink-muted, #5d564a);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   13. Loading skeleton — opacity pulse matching final layout blocks
+   ------------------------------------------------------------------------- */
+
+.skeleton {
+  display: block;
+  height: 1.1em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pf-line, #e4dcce) 70%, var(--pf-surface, #ffffff));
+  animation: pf-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pf-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Reduced motion kills ALL animation and transition globally, including the
+   skeleton pulse (which then reads as a static placeholder block). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   14. Cook mode — one step fills the viewport; forced high-contrast token set
+   happens in JS via applyTheme("contrast"). Type sizes come from the theme's
+   font tokens so cook mode scales with its own body size.
+   ------------------------------------------------------------------------- */
+
+.cook-step {
+  font-family: var(--pf-font-display);
+  font-weight: 500;
+  font-size: var(--pf-font-size-step, 30px);
+  line-height: 1.45;
+  max-width: 32ch;
+}
+
+.cook-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.cook-nav .btn {
+  min-height: var(--pf-min-touch-target-cook, 56px);
+  min-width: var(--pf-min-touch-target-cook, 56px);
+  padding: 0 24px;
+  font-size: 1.125rem;
+}
+
+.cook-progress {
+  color: var(--pf-ink-muted, #5d564a);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Timer chips parsed from step text: tappable, quiet completion banner. */
+.timer-chip {
+  min-height: var(--pf-min-touch-target-cook, 56px);
+  padding: 0 24px;
+  border: 1px solid var(--pf-line, #e4dcce);
+  border-radius: 999px;
+  background: var(--pf-surface, #ffffff);
+  color: var(--pf-ink, #26221c);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   15. Empty state — typographic centred block. Serif line, one sentence,
+   one primary action. No illustrations, no emoji.
+   ------------------------------------------------------------------------- */
+
+.empty-state {
+  max-width: 44ch;
+  margin: 64px auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.empty-state__title {
+  font-family: var(--pf-font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--pf-ink-muted, #5d564a);
+  margin-bottom: 24px;
+}
+
+/* ---------------------------------------------------------------------------
+   16. Print — survives a fridge door. Black on white; nav/toolbars/timers
+   hidden; ingredient grid and step numbering preserved; nothing important
+   splits across pages.
+   ------------------------------------------------------------------------- */
+
+@page {
+  margin: 18mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body,
+  body * {
+    color: #000000 !important;
+    background: transparent !important;
+  }
+
+  .no-print,
+  .cook-nav,
+  .timer-chip,
+  .segmented,
+  .skeleton {
+    display: none !important;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  /* Checkbox glyphs become printed squares; checked keeps its stroke. */
+  .list-item input[type="checkbox"] {
+    border-color: #000000 !important;
+  }
+
+  .list-item input[type="checkbox"]::before {
+    border-left-color: #000000 !important;
+    border-bottom-color: #000000 !important;
+  }
+
+  /* Never split an ingredient row, a step from its number, or a heading
+     from what follows it. */
+  .ingredient-row,
+  .steps > li,
+  .list-item,
+  .warn-panel,
+  .banner-error {
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3,
+  .section-heading {
+    break-after: avoid;
+  }
+}
