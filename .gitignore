@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# local user data — never commit personal data
+*.local.json
+data/local/
+backups/
+panfare-data-*.json
+
+# build artifacts (project is buildless, but be safe)
+dist/
+.vite/
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor
+.vscode/
+.idea/
+
+# logs
+npm-debug.log*
+*.log
+
+# coverage
+coverage/
