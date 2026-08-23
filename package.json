@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Local-first recipe manager: exact serving scaling, unit-aware shopping lists, week planner, cook mode.",
   "type": "module",
+  "engines": { "node": ">=20.10" },
   "license": "MIT",
   "scripts": {
     "dev": "node tools/server.mjs",

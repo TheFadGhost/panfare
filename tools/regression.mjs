@@ -108,15 +108,12 @@ for (const recipe of samples) {
       }
     }
 
-    // absurd-unit guards: a volume item must not render in tsp when it is
-    // more than a cup's worth; mass must not stay grams past 2kg etc.
+    // absurd-unit guard: a volume item must not stay in tsp when it is
+    // more than a cup's worth (the ladder should have promoted it)
     for (const line of scaled.ingredients) {
       if (!line.quantity || !line.unit) continue;
       const r = formatQuantity({ amount: line.quantity, unit: line.unit });
-      const tspWorth = line.unit === "tsp" ? line.quantity : null;
-      if (tspWorth && tspWorth.d !== 1 && false) continue; // (kept simple below)
       if (line.unit === "tsp" && r.text.includes("tsp")) {
-        // >16 tbsp worth staying in tsp would be absurd
         const tbsp = mul(line.quantity, F(1, 3));
         if (tbsp.n / tbsp.d >= 16) {
           defect(where + " [" + line.item + "]", "absurd unit kept: large amount still in tsp");
@@ -142,10 +139,10 @@ for (const factor of FACTORS) {
     for (const item of group.items) {
       for (const q of item.quantities) {
         if (!q.amount) continue;
-        if (q.amount.n <= 0) {
+        if (!(q.amount.n > 0)) {
           defect("merge [" + item.key + "]", "non-positive merged amount " + JSON.stringify(q.amount));
         }
-        if (BARE_DECIMAL.test(String(q.amount.n)) === false && !Number.isInteger(q.amount.n)) {
+        if (!Number.isInteger(q.amount.n)) {
           defect("merge [" + item.key + "]", "non-integer merged numerator " + JSON.stringify(q.amount));
         }
       }

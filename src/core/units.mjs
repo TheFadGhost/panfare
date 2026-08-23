@@ -138,6 +138,9 @@ export function tryConvert(amount, fromId, toId) {
     const to = getUnit(toId);
     if (!from || !to) return { ok: false, reason: "unknown-unit" };
     if (from.dim !== to.dim) return { ok: false, reason: "different-dimension" };
+    if (from.dim === DIMENSION.COUNT && from.id !== to.id) {
+      return { ok: false, reason: "different-count-unit" };
+    }
     return { ok: true, value: convert(amount, fromId, toId) };
   } catch (err) {
     return { ok: false, reason: String(err && err.message || err) };

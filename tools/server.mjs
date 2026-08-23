@@ -33,7 +33,12 @@ const server = createServer(async (req, res) => {
     try {
       await stat(target);
     } catch {
-      target = join(root, "index.html"); // SPA fallback
+      // SPA fallback only for navigations; never serve HTML for missing JS
+      if (path.endsWith(".mjs") || path.endsWith(".css") || path.endsWith(".json")) {
+        res.writeHead(404, { "content-type": "text/plain" }).end("Not found");
+        return;
+      }
+      target = join(root, "index.html");
     }
     const body = await readFile(target);
     res.writeHead(200, {

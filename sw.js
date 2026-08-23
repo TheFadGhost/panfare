@@ -30,15 +30,22 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || url.origin !== location.origin) return;
   // modules: network-first so updates land; shell: cache-first for instant boot
   const isModule = url.pathname.startsWith("/src/");
+  if (!isModule) {
+    event.respondWith(
+      caches.match(event.request).then((hit) => hit || fetch(event.request))
+    );
+    return;
+  }
   event.respondWith(
-    isModule
-      ? fetch(event.request)
-          .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE_VERSION).then((c) => c.put(event.request, copy));
-            return res;
-          })
-          .catch(() => caches.match(event.request))
-      : caches.match(event.request).then((hit) => hit || fetch(event.request))
+    fetch(event.request)
+      .then((res) => {
+        const copyDone = caches
+          .open(CACHE_VERSION)
+          .then((cache) => cache.put(event.request, res.clone()));
+        // keep the response alive even if the page goes away mid-write
+        event.waitUntil(copyDone);
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

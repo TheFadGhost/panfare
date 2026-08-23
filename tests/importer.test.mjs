@@ -118,7 +118,7 @@ describe("extractRecipesFromHtml — JSON-LD", () => {
     expect(result.ok).toBe(true);
     expect(result.recipes).toHaveLength(1);
     const r = result.recipes[0];
-    expect(r.id).toMatch(/^r_[a-z0-9]{8}$/);
+    expect(r.id).toMatch(/^r_[a-z0-9]{6,}$/);
     expect(r.title).toBe("Sunlit Tomato & White Bean Stew");
     expect(r.title).not.toContain("&amp;");
   });

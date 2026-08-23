@@ -8,6 +8,7 @@ import { h, clear } from "./dom.mjs";
 const routes = new Map();
 let cleanup = null;
 let mainEl = null;
+let navToken = 0;
 
 export function initRouter(main) {
   mainEl = main;
@@ -63,9 +64,14 @@ function render() {
     return;
   }
   document.body.dataset.route = matched.params && Object.keys(matched.params).length ? hash.split("/")[1] : hash.replace("#/", "");
+  const token = ++navToken;
   const result = matched.view(mainEl, matched.params);
   if (result && typeof result.catch === "function") {
-    result.then((c) => { if (typeof c === "function") cleanup = c; });
+    result.then((c) => {
+      // a newer navigation superseded this async mount
+      if (token !== navToken) return;
+      if (typeof c === "function") cleanup = c;
+    });
   } else if (typeof result === "function") {
     cleanup = result;
   }

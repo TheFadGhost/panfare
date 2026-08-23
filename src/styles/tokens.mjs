@@ -169,7 +169,8 @@ export function applyTheme(name, { root = document } = {}) {
 export function preferredTheme() {
   if (typeof matchMedia !== "function") return "light";
   try {
-    return matchMedia("(prefers-contrast: more)").matches ? "contrast" : "light";
+    if (matchMedia("(prefers-contrast: more)").matches) return "contrast";
+    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   } catch {
     return "light";
   }

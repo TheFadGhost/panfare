@@ -19,9 +19,12 @@ function staplesList() {
   return Array.isArray(s) && s.length ? s : [...DEFAULT_STAPLES];
 }
 
+// Picker state survives view remounts (mode toggles, servings edits) so a
+// half-built list is never silently forgotten.
+const includeIds = new Set();
+const servingsOverrides = new Map();
+
 export function listView(container, params) {
-  let includeIds = new Set();
-  let servingsOverrides = new Map(); // id -> int
   let source = params && params.query && params.query.get("src") === "plan" ? "plan" : "picked";
   let excludeStaples = true;
 
@@ -165,10 +168,12 @@ export function listView(container, params) {
       for (const r of recipes()) {
         const input = h("input", {
           type: "checkbox",
+          "aria-label": "Include " + r.title,
+          ...(includeIds.has(r.id) ? { checked: true } : {}),
           onchange: () => {
             if (input.checked) includeIds.add(r.id);
             else includeIds.delete(r.id);
-            refresh();
+            rebuild();
           },
         });
         const serv = h("input", {
@@ -248,7 +253,9 @@ export function listView(container, params) {
     renderBody(body);
   }
   function refresh() {
-    // full re-mount of the view keeps selector state simple
+    // full re-mount keeps the selector panel simple; run our own cleanup
+    // first so subscribers/timers never stack across remounts
+    if (cleanupFn) cleanupFn();
     mountAgain();
   }
   function printList() {
@@ -283,8 +290,14 @@ export function listView(container, params) {
 
   rebuild();
 
-  return function cleanup() {
+  let cleanupFn = null;
+  cleanupFn = function () {
     unsub();
     if (rebuildTimer) clearTimeout(rebuildTimer);
+    cleanupFn = null;
+  };
+
+  return function cleanup() {
+    if (cleanupFn) cleanupFn();
   };
 }

@@ -5,13 +5,21 @@ import { getState, getRecipe, getScale, upsertRecipe } from "../state.mjs";
 import { scaleRecipe, parseStepTimers } from "../../core/scaling.mjs";
 import { formatQuantity, pickDisplayUnit, roundMetricBase } from "../../core/format.mjs";
 import { makeFraction } from "../../core/fraction.mjs";
-import { applyTheme } from "../../styles/tokens.mjs";
+import { applyTheme, preferredTheme } from "../../styles/tokens.mjs";
 import { navigate } from "../router.mjs";
 
 function mmss(totalSeconds) {
   const s = Math.max(0, Math.floor(totalSeconds));
   const m = Math.floor(s / 60);
   return String(m).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+
+function resolveThemeSetting(setting) {
+  // mirrors app.mjs: explicit theme wins; otherwise follow the system
+  if (setting === "light" || setting === "dark" || setting === "contrast") {
+    return setting;
+  }
+  return preferredTheme();
 }
 
 export function cookView(container, params) {
@@ -39,6 +47,11 @@ export function cookView(container, params) {
     try {
       if ("wakeLock" in navigator) {
         wakeLock = await navigator.wakeLock.request("screen");
+        // The OS can release the lock on its own (tab switch, battery);
+        // reset so the visibility handler re-acquires.
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+        });
       }
     } catch {
       wakeLock = null; // silent per DESIGN.md
@@ -60,7 +73,7 @@ export function cookView(container, params) {
   let index = 0;
 
   const progressEl = h("p", { class: "cook-progress", "aria-live": "polite" });
-  const stepTextEl = h("p", { class: "cook-step" });
+  const stepTextEl = h("p", { class: "cook-step", tabindex: "-1" });
   const timerBar = h("div", { class: "cook-timers" });
   const banner = h("div", { class: "banner-ok", hidden: true }, "");
   const aside = h("aside", { class: "cook-ingredients", hidden: true });
@@ -96,7 +109,7 @@ export function cookView(container, params) {
     const parsed = parseStepTimers(text);
     parsed.forEach((t) => {
       const id = ++timerSeq;
-      const label = t.label + (t.range ? " (range)" : "");
+      const label = t.label;
       const chip = h("button", {
         class: "timer-chip btn",
         type: "button",
@@ -138,6 +151,10 @@ export function cookView(container, params) {
     }
   }
 
+  function focusStep() {
+    try { stepTextEl.focus({ preventScroll: false }); } catch { /* very old engines */ }
+  }
+
   function go(delta) {
     if (index + delta >= steps.length) {
       finishFlow();
@@ -145,6 +162,7 @@ export function cookView(container, params) {
     }
     index = Math.max(0, index + delta);
     renderStep();
+    focusStep();
   }
 
   function finishFlow() {
@@ -227,6 +245,7 @@ export function cookView(container, params) {
   );
 
   renderStep();
+  focusStep();
 
   return function cleanup() {
     disposed = true;
@@ -237,8 +256,6 @@ export function cookView(container, params) {
     timers.clear();
     try { if (wakeLock) wakeLock.release(); } catch { /* already released */ }
     wakeLock = null;
-    if (previousThemeSetting && ["light", "dark", "contrast"].includes(previousThemeSetting)) {
-      applyTheme(previousThemeSetting);
-    }
+    applyTheme(resolveThemeSetting(previousThemeSetting));
   };
 }

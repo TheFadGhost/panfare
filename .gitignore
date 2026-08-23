@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.tmp-stranger/
 
 # local user data — never commit personal data
 *.local.json

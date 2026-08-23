@@ -15,7 +15,7 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-Requires Node 18+ for the dev server and tests. The app itself is buildless ES modules.
+Requires Node 20.10+ (the dev server, tests and JSON import syntax). The app itself is buildless ES modules.
 
 ## Commands
 

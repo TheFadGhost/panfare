@@ -5,6 +5,7 @@ import { getState, subscribe } from "./state.mjs";
 import { initRouter, registerRoute } from "./router.mjs";
 import { libraryView } from "./views/library.mjs";
 import { recipeView } from "./views/recipeView.mjs";
+import { recipeForm } from "./views/recipeForm.mjs";
 import { cookView } from "./views/cookMode.mjs";
 import { listView } from "./views/listView.mjs";
 import { plannerView } from "./views/plannerView.mjs";
@@ -20,8 +21,11 @@ function boot() {
   applyTheme(resolveTheme(settings.theme));
   subscribe((s) => applyTheme(resolveTheme((s.settings || {}).theme)));
 
-  subscribe((s) => applyTheme(resolveTheme((s.settings || {}).theme)));
-
+  // literal segments must register before the parameterised route so
+  // "#/recipe/new" is not swallowed by "#/recipe/:id"
+  registerRoute("#/recipe/new", (container) => recipeForm(container, { id: "new" }));
+  registerRoute("#/recipe/edit/:id", (container, params) =>
+    recipeForm(container, { id: "edit:" + params.id }));
   registerRoute("#/library", libraryView);
   registerRoute("#/recipe/:id", recipeView);
   registerRoute("#/cook/:id", cookView);
@@ -29,6 +33,19 @@ function boot() {
   registerRoute("#/planner", plannerView);
   registerRoute("#/settings", settingsView);
   initRouter(document.getElementById("main"));
+
+  // Storage-full banner: quota errors are broadcast by state; without a
+  // listener users would keep editing while every change silently failed.
+  const quotaBanner = document.createElement("div");
+  quotaBanner.className = "banner-error";
+  quotaBanner.setAttribute("role", "alert");
+  quotaBanner.hidden = true;
+  quotaBanner.textContent =
+    "Changes could not be saved — storage is full. Export a backup from Settings and remove some photos or recipes.";
+  document.body.append(quotaBanner);
+  window.addEventListener("panfare:quota", () => {
+    quotaBanner.hidden = false;
+  });
 
   // Global keyboard shortcuts (input-safe). Full list behind "?".
   document.addEventListener("keydown", (e) => {
@@ -41,7 +58,7 @@ function boot() {
         target.isContentEditable);
     if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "?") {
-      import("./shortcutsOverlay.mjs").then((m) => m.showShortcuts());
+      import("./views/shortcutsOverlay.mjs").then((m) => m.showShortcuts());
       e.preventDefault();
       return;
     }

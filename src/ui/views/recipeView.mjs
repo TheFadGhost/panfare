@@ -1,4 +1,4 @@
-// recipeView.mjs — the typographic recipe page.
+// recipeView.mjs â€” the typographic recipe page.
 //
 // Reads the stored recipe, applies the remembered scale factor (state.getScale)
 // and renders per DESIGN.md: three-column ingredient grid, vulgar-fraction
@@ -18,6 +18,7 @@ import {
   roundMetricBase,
 } from "../../core/format.mjs";
 import { numberTokenToFraction } from "../../core/parser.mjs";
+import { safeUrl } from "../../core/urlsafe.mjs";
 
 const QUICK_FACTORS = [
   { label: "\u00BD", frac: { n: 1, d: 2 } },
@@ -42,7 +43,8 @@ const NUM_TOKEN_RE = new RegExp(
   "g"
 );
 const YEAR_UNIT_RE =
-  /^(?:cups?|tbsps?|tsps?|tablespoons?|teaspoons?|grams?|g|kgs?|kg|kilograms?|ml|millilitres?|milliliters?|l|litres?|liters?|floz|fluid ounces|oz|ounces?|lbs?|pounds?|cloves?|slices?|sprigs?|leaves|sticks?|pinches|dashes|handfuls|packets?|cans?|bunches|heads?|fillets?|rashers?|each|portions?|servings?|batches|tins?|trays?|sheets?|layers?|hours?|hrs?|minutes?|mins?|seconds?|secs?|days?|degrees?|x)/i;
+// keep word-for-word in sync with scaling.mjs YEAR_UNIT_WHITELIST_RE
+/^(?:cups?|tbsps?|tsps?|tablespoons?|teaspoons?|grams?|g|kgs?|kg|kilograms?|ml|millilitres?|milliliters?|l|litres?|liters?|floz|fluid ounces|oz|ounces?|lbs?|pounds?|cloves?|slices?|sprigs?|leaves|sticks?|pinches|pinchs?|dashes|handfuls|packets?|cans?|bunches|heads?|fillets?|rashers?|each|portions?|servings?|batches|tins?|trays?|sheets?|layers?|hours?|hrs?|minutes?|mins?|seconds?|secs?|days?|degrees?|x)/i;
 
 /** True when this number must NOT be wrapped as a scaling quantity
  *  (temperatures, gas marks, servings counts, ordinals, years, durations). */
@@ -72,9 +74,6 @@ function htmlFragment(htmlString) {
 }
 
 const MARKER = "\u2248 ";
-function stripMarker(s) {
-  return s.startsWith(MARKER) ? s.slice(MARKER.length) : s;
-}
 
 /**
  * Split one scaled amount into grid cells: the bare number (with honest
@@ -85,13 +84,15 @@ function quantityCells(frac, unitId, system) {
   let value = frac;
   let unit = unitId || null;
   let approx = false;
+  let unknownUnit = false;
   if (unit) {
     try {
       const picked = pickDisplayUnit(value, unit, { system: system || null });
       value = picked.amount;
       unit = picked.unitId;
     } catch {
-      unit = null; // stale/unknown unit id in storage: render the bare number
+      unit = null; // stale/unknown unit id in storage
+      unknownUnit = true;
     }
     if ((unit === "ml" || unit === "g") && system !== "imperial") {
       const r = roundMetricBase(value);
@@ -110,12 +111,18 @@ function quantityCells(frac, unitId, system) {
     } catch {
       unitText = "";
     }
+  } else if (unknownUnit) {
+    unitText = "unknown unit";
   }
-  const prefix = approx && !bare.approx ? MARKER : "";
+  // Preserve formatQuantity's own honesty marker; add one only for metric
+  // rounding this helper performed itself.
+  const prefix = approx && !bare.text.startsWith(MARKER) ? MARKER : "";
+  const markedText = prefix + bare.text;
+  const markedHtml = prefix + bare.html;
   return {
-    text: prefix + stripMarker(bare.text),
-    html: prefix + stripMarker(bare.html),
-    aria: (approx || bare.approx ? "approximately " : "") + bare.aria,
+    text: markedText,
+    html: markedHtml,
+    aria: (approx || bare.approx ? "approximately " : "") + bare.aria + (unknownUnit ? ", unknown unit" : ""),
     unitText,
   };
 }
@@ -182,7 +189,7 @@ function stepHtml(text) {
       } catch {
         frac = null;
       }
-      out += frac ? qtyHtml(formatScalar(frac)) : escapeHtml(token);
+      out += frac ? qtyHtml(formatScalar(frac, 16)) : escapeHtml(token);
     }
     last = m.index + token.length;
   }
@@ -249,7 +256,7 @@ export function recipeView(container, params) {
       location.hash = "#/cook/" + encodeURIComponent(recipe.id);
       e.preventDefault();
     } else if (e.key === "e") {
-      location.hash = "#/recipe/edit:" + encodeURIComponent(recipe.id);
+      location.hash = "#/recipe/edit/" + encodeURIComponent(recipe.id);
       e.preventDefault();
     }
   }
@@ -282,11 +289,12 @@ export function recipeView(container, params) {
     }
     const src = recipe.source || {};
     const label = [src.author, src.title].find((v) => typeof v === "string" && v.trim());
+    const safeLink = safeUrl(src.url);
     if (label || src.url) {
       parts.push(" \u00B7 from ");
       parts.push(
-        src.url
-          ? h("a", { href: src.url, target: "_blank", rel: "noopener noreferrer" }, label || src.url)
+        safeLink
+          ? h("a", { href: safeLink, target: "_blank", rel: "noopener noreferrer" }, label || safeLink)
           : String(label)
       );
     }
@@ -373,7 +381,20 @@ export function recipeView(container, params) {
     function applyFactor(f) {
       factor = f;
       setScale(recipe.id, f);
+      const focusedLabel = document.activeElement instanceof HTMLElement &&
+        segmented.contains(document.activeElement)
+        ? document.activeElement.textContent
+        : null;
       render();
+      if (focusedLabel) {
+        const again = segmented.querySelector(
+          'button[aria-pressed="true"]'
+        );
+        const byLabel = Array.from(segmented.querySelectorAll("button"))
+          .find((b) => b.textContent === focusedLabel);
+        const target = again || byLabel;
+        if (target instanceof HTMLElement) target.focus();
+      }
     }
 
     const segmented = h("div", { class: "segmented", role: "group", "aria-label": "Quick scale factors" });
@@ -385,6 +406,18 @@ export function recipeView(container, params) {
             type: "button",
             "aria-pressed": eq(factor, option.frac) ? "true" : "false",
             onclick: () => applyFactor(option.frac),
+            onkeydown: (e) => {
+              // roving arrows within the group, per WAI-ARIA button-group pattern
+              if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+              e.preventDefault();
+              const buttons = Array.from(segmented.querySelectorAll("button"));
+              const i = buttons.indexOf(document.activeElement);
+              if (i === -1) return;
+              const delta = e.key === "ArrowRight" ? 1 : -1;
+              const next = buttons[(i + delta + buttons.length) % buttons.length];
+              next.focus();
+              applyFactor(QUICK_FACTORS[buttons.indexOf(next)].frac);
+            },
           },
           option.label
         )
@@ -450,7 +483,7 @@ export function recipeView(container, params) {
         style: "display:flex;gap:12px;flex-wrap:wrap;margin:32px 0 16px;",
       },
       h("a", { class: "btn btn-primary", href: "#/cook/" + encodeURIComponent(recipe.id) }, "Cook"),
-      h("a", { class: "btn", href: "#/recipe/edit:" + encodeURIComponent(recipe.id) }, "Edit"),
+      h("a", { class: "btn", href: "#/recipe/edit/" + encodeURIComponent(recipe.id) }, "Edit"),
       h("button", { class: "btn", type: "button", onclick: printRecipe }, "Print"),
       h("a", { class: "btn", href: "#/planner" }, "Add to planner"),
       deleteBtn

@@ -8,6 +8,7 @@
 import { h } from "../dom.mjs";
 import { getState, subscribe, seedSamples } from "../state.mjs";
 import { matchesQuery, totalMinutes, whatCanIMake } from "../../core/search.mjs";
+import { safeUrl } from "../../core/urlsafe.mjs";
 
 const SEARCH_DEBOUNCE_MS = 120;
 const PANTRY_RESULT_LIMIT = 12;
@@ -65,10 +66,12 @@ function sourceLine(recipe) {
   const src = recipe.source || {};
   const label = [src.author, src.title].find((v) => typeof v === "string" && v.trim());
   if (!label && !src.url) return null;
-  if (src.url && typeof src.url === "string") {
-    return h("p", { class: "prep" }, "from ", h("a", { href: src.url, target: "_blank", rel: "noopener noreferrer" }, label || src.url));
+  const safeLink = safeUrl(src.url);
+  if (safeLink) {
+    return h("p", { class: "prep" }, "from ", h("a", { href: safeLink, target: "_blank", rel: "noopener noreferrer" }, label || safeLink));
   }
-  return h("p", { class: "prep" }, "from ", label);
+  if (label) return h("p", { class: "prep" }, "from ", label);
+  return h("p", { class: "prep" }, "from ", "(unverified link removed)");
 }
 
 function ratingBadge(rating) {

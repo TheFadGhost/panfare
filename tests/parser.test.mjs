@@ -43,8 +43,7 @@ describe("fixture set (" + fixtures.length + " original lines)", () => {
       } else {
         expect(line.quantity).toEqual(arr(e.quantity));
       }
-      expect(line.quantityMax && e.quantityMax ? line.quantityMax : line.quantityMax)
-        .toEqual(arr(e.quantityMax));
+      expect(line.quantityMax).toEqual(arr(e.quantityMax));
       expect(line.unit).toBe(e.unit);
       expect(line.item).toBe(e.item);
       expect(line.preparation).toBe(e.preparation);

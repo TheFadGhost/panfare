@@ -216,6 +216,7 @@ function createAccumulator(key) {
   return {
     key,
     wordings: new Map(),
+    rawSample: "",
     recipeIds: [],
     preparations: [],
     preparationKeys: new Set(),
@@ -283,6 +284,7 @@ export function buildShoppingList(inputs, opts = {}) {
       }
       if (typeof line.item === "string" && line.item.trim()) {
         recordWording(acc, line.item.trim());
+        acc.rawSample = line.item.trim();
       }
       const preparation =
         typeof line.preparation === "string" ? line.preparation.trim() : "";
@@ -297,8 +299,13 @@ export function buildShoppingList(inputs, opts = {}) {
       ) {
         acc.sectionOverride = line.sectionOverride;
       }
-      if (line.quantity && line.unit) {
-        acc.scaled.push({ amount: mul(line.quantity, factor), unit: line.unit });
+      if (line.quantity) {
+        // A quantity without a unit ("3 eggs") is a count; merge it as such
+        // so unit-less lines combine instead of being dropped.
+        acc.scaled.push({
+          amount: mul(line.quantity, factor),
+          unit: line.unit || "each",
+        });
       } else {
         acc.unquantified = true;
       }
@@ -307,7 +314,12 @@ export function buildShoppingList(inputs, opts = {}) {
 
   const sectionBuckets = new Map();
   for (const acc of groups.values()) {
-    const densityInfo = lookupDensity(acc.key);
+    // Density tables key on real kitchen phrases ("icing sugar", "ground
+    // almonds"), so try the raw wording first and only fall back to the
+    // qualifier-stripped identity key.
+    const densityInfo =
+      lookupDensity(String(acc.rawSample || "").toLowerCase()) ||
+      lookupDensity(acc.key);
     const merged = mergeQuantities(acc.scaled, {
       system,
       density: densityInfo ? densityInfo.density : null,

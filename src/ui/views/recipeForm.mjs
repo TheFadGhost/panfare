@@ -13,6 +13,7 @@ import { getRecipe, upsertRecipe } from "../state.mjs";
 import { parseIngredientLines, parseIngredientLine } from "../../core/parser.mjs";
 import { numberTokenToFraction } from "../../core/scaling.mjs";
 import { resolveUnit, registerCountUnit } from "../../core/units.mjs";
+import { makeId } from "../../core/id.mjs";
 
 const MAX_PHOTO_EDGE = 512;
 const PHOTO_WARN_BYTES = 300 * 1024;
@@ -632,8 +633,6 @@ export function recipeForm(container, params) {
         substitute: row.sub.trim() || null,
         sectionOverride: (old && old.sectionOverride) || null,
         staple: !!(old && old.staple),
-        uncertain: row.uncertain ? true : false,
-        uncertaintyReason: row.uncertain ? row.reason || null : null,
       };
     });
 
@@ -643,7 +642,7 @@ export function recipeForm(container, params) {
     const yieldText = yieldTextInput.value.trim();
 
     const recipe = {
-      id: editing ? editing.id : "r_" + Date.now().toString(36),
+      id: editing ? editing.id : makeId("r"),
       title: titleInput.value.trim(),
       yield: {
         serves: Number.isInteger(serves) && serves > 0 ? serves : null,

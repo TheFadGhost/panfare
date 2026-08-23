@@ -89,16 +89,16 @@ export function numberTokenToFraction(token) {
   }
   const slash = /^(\d+)\s*[/⁄]\s*(\d+)$/.exec(t);
   if (slash) return makeFraction(Number(slash[1]), Number(slash[2]));
-  const dec = /^\d+\.\d+$/.test(t);
-  if (dec) return fromDecimalString(t);
+  if (/^\d+\.\d+$/.test(t)) return fromDecimalString(t);
   if (/^\d+$/.test(t)) return makeFraction(Number(t));
-  if (t.length === 1 && VULGAR.has(t)) return vulgarToFrac(t);
-  // integer + vulgar glued together ("1½")
-  if (t.length === 2 && VULGAR.has(t[1]) && /\d/.test(t[0])) {
-    const whole = Number(t[0]);
-    const part = vulgarToFrac(t[1]);
+  // integer + vulgar glued together ("10½"), any digit count
+  const glued = /^(\d+)([\u00BD\u2153\u2154\u00BC\u00BE\u2155\u2156\u2157\u2158\u2159\u215A\u215B\u215C\u215D\u215E])$/.exec(t);
+  if (glued) {
+    const whole = Number(glued[1]);
+    const part = vulgarToFrac(glued[2]);
     return makeFraction(whole * part.d + part.n, part.d);
   }
+  if (VULGAR.has(t)) return vulgarToFrac(t);
   return null;
 }
 

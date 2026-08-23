@@ -1,4 +1,4 @@
-// settingsView.mjs — themes, units, staples, data safety, recipe import.
+// settingsView.mjs â€” themes, units, staples, data safety, recipe import.
 
 import { h, clear } from "../dom.mjs";
 import {
@@ -7,6 +7,7 @@ import {
 } from "../state.mjs";
 import { DEFAULT_STAPLES } from "../../core/shoppingList.mjs";
 import { fetchAndExtract, extractRecipesFromHtml } from "../../core/importer.mjs";
+import { makeId } from "../../core/id.mjs";
 import { navigate } from "../router.mjs";
 
 function banner(kind, msg) {
@@ -51,8 +52,8 @@ export function settingsView(container) {
     const unitsFieldset = h("fieldset", {},
       h("legend", {}, "Units"),
       h("p", { class: "muted" },
-        "Conversions inside a dimension are exact. Volume and weight are only ever bridged when the ingredient’s density is known; otherwise amounts are kept separate."),
-      [["auto", "Auto (keep each recipe’s own system)"], ["metric", "Prefer metric"], ["imperial", "Prefer imperial"]].map(([val, label]) => {
+        "Conversions inside a dimension are exact. Volume and weight are only ever bridged when the ingredientâ€™s density is known; otherwise amounts are kept separate."),
+      [["auto", "Auto (keep each recipeâ€™s own system)"], ["metric", "Prefer metric"], ["imperial", "Prefer imperial"]].map(([val, label]) => {
         const id = slugId("units", val);
         const input = h("input", {
           type: "radio",
@@ -109,7 +110,7 @@ export function settingsView(container) {
 
     // ---- data ------------------------------------------------------------------
     const statusArea = h("div", {});
-    const estimateP = h("p", { class: "muted" }, "Estimating storage…");
+    const estimateP = h("p", { class: "muted" }, "Estimating storageâ€¦");
     async function drawEstimate() {
       try {
         if (navigator.storage && navigator.storage.estimate) {
@@ -167,6 +168,10 @@ export function settingsView(container) {
         }
         const mode = (document.querySelector('input[name="pf-restore-mode"]:checked') || {}).value || "merge";
         const reader = new FileReader();
+        reader.onerror = () => {
+          clear(statusArea);
+          statusArea.append(banner("error", "That file could not be read — try selecting it again."));
+        };
         reader.onload = () => {
           try {
             importBackup(String(reader.result), mode);
@@ -174,7 +179,7 @@ export function settingsView(container) {
             statusArea.append(banner("ok", "Backup restored (" + mode + ")."));
           } catch (err) {
             clear(statusArea);
-            statusArea.append(banner("error", "That doesn’t look like a Panfare backup — nothing was changed. (" + err.message + ")"));
+            statusArea.append(banner("error", "That doesnâ€™t look like a Panfare backup â€” nothing was changed. (" + err.message + ")"));
           }
         };
         reader.readAsText(file);
@@ -186,7 +191,7 @@ export function settingsView(container) {
     const pasteArea = h("textarea", {
       rows: "6",
       "aria-label": "Paste page HTML",
-      placeholder: "Paste the page’s full HTML here (Ctrl+A on the page, copy, paste).",
+      placeholder: "Paste the pageâ€™s full HTML here (Ctrl+A on the page, copy, paste).",
     });
     const importStatus = h("div", { "aria-live": "polite" });
     const previewArea = h("div", {});
@@ -236,7 +241,7 @@ export function settingsView(container) {
         h("h3", {}, partial.title || "Untitled"),
         h("p", { class: "muted" },
           (partial.yield && (partial.yield.text || (partial.yield.serves ? "serves " + partial.yield.serves : "")) || "") +
-          " · " + partial.ingredients.length + " ingredients · " + partial.steps.length + " steps"),
+          " Â· " + partial.ingredients.length + " ingredients Â· " + partial.steps.length + " steps"),
         partial.source && (partial.source.title || partial.source.author)
           ? h("p", { class: "muted" }, "Source: " + [partial.source.author, partial.source.title].filter(Boolean).join(", "))
           : null,
@@ -251,7 +256,7 @@ export function settingsView(container) {
               const now = new Date().toISOString();
               const full = {
                 ...partial,
-                id: "r_" + Date.now().toString(36),
+                id: makeId("r"),
                 createdAt: now,
                 updatedAt: now,
                 rating: null,
@@ -273,7 +278,7 @@ export function settingsView(container) {
         if (!url) return;
         clear(importStatus);
         clear(previewArea);
-        importStatus.append(h("p", { class: "muted" }, "Fetching…"));
+        importStatus.append(h("p", { class: "muted" }, "Fetchingâ€¦"));
         const res = await fetchAndExtract(url);
         clear(importStatus);
         if (!res.ok) {
@@ -305,7 +310,7 @@ export function settingsView(container) {
       h("fieldset", {},
         h("legend", {}, "Your data"),
         h("p", { class: "muted" },
-          "Everything lives in this browser’s local storage — no account, no server.",
+          "Everything lives in this browserâ€™s local storage â€” no account, no server.",
           " Backups are plain JSON files you own."),
         estimateP,
         h("div", { class: "btn-row" }, exportBtn, fileInput, restoreBtn),

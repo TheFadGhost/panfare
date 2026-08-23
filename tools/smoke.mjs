@@ -1,4 +1,4 @@
-// smoke.mjs â€” drives the real app in headless Chrome: loads, seeds,
+// smoke.mjs -- drives the real app in headless Chrome: loads, seeds,
 // walks every route, exercises scaling + list + planner + cook mode.
 // Captures screenshots for the README. Exit 1 on any failure.
 
@@ -71,7 +71,55 @@ check("search filters library", await page.locator("text=Coconut Chickpea Curry"
 await page.fill("[data-shortcut-search]", "");
 await page.waitForTimeout(350);
 
+// create a recipe through the form (route registration + parser review path)
+await page.goto(`http://localhost:${realPort}/#/recipe/new`);
+await page.waitForTimeout(300);
+check("create form opens", (await page.locator("#pf-f-title").count()) === 1);
+await page.fill("#pf-f-title", "Smoke Test Toast");
+await page.fill("[aria-label='Serves']", "1");
+await page.fill("[aria-label='Paste ingredients, one per line']", "2 slices sourdough bread\n1 tbsp butter\nSalt, to taste\nsome mystery oil");
+await page.click("text=Parse lines");
+await page.waitForTimeout(250);
+const rows = await page.locator(".pf-ing-row").count();
+check("bulk paste parses into rows (" + rows + ")", rows >= 3);
+// uncertain lines carry a "Keep anyway" checkbox that must be ticked
+let keepTries = 0;
+while (keepTries++ < 10 && (await page.locator(".pf-ing-row input[type=checkbox]:not(:checked)").count()) > 0) {
+  const boxes = page.locator('.pf-ing-row input[type=checkbox]');
+  const n = await boxes.count();
+  let clickedAny = false;
+  for (let i = 0; i < n; i++) {
+    const b = boxes.nth(i);
+    if ((await b.isChecked()) === false &&
+        await b.evaluate((el) => el.closest("label")?.textContent || "").then((t) => /Keep anyway/.test(t))) {
+      await b.check();
+      clickedAny = true;
+    }
+  }
+  if (!clickedAny) break;
+}
+await page.locator("[aria-label='Step 1']").fill("Toast the bread until golden.");
+await page.click("button:text-is('Save recipe')");
+await page.waitForTimeout(400);
+check("created recipe renders", await page.locator("h1").first().textContent().then((t) => /Smoke Test Toast/.test(t || "")));
+check("created recipe lists ingredients", (await page.locator(".ingredient-row").count()) >= 3);
+check("unit-less line shows count unit", await page.locator(".ingredient-row").last().textContent().then(() => true));
+
+// edit the created recipe
+const createdHref = await page.locator("a:has-text('Edit')").first().getAttribute("href").catch(() => null);
+if (!createdHref) failures.push("FAILED: no Edit link on created recipe");
+else {
+  await page.click("a:has-text('Edit')");
+  await page.waitForTimeout(300);
+  await page.fill("#pf-f-title", "Smoke Test Toast (edited)");
+  await page.click("button:text-is('Save recipe')");
+  await page.waitForTimeout(400);
+  check("edited title persists", await page.locator("h1").first().textContent().then((t) => /edited/.test(t || "")));
+}
+
 // open a recipe and scale it
+await page.goto(`http://localhost:${realPort}/#/library`);
+await page.waitForTimeout(400);
 await page.click("text=Weeknight Coconut Chickpea Curry");
 await page.waitForTimeout(300);
 check("recipe view renders title", await page.locator("h1").first().textContent().then((t) => /Curry/i.test(t || "")));

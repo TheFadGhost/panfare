@@ -105,24 +105,11 @@ const MASTER = new RegExp(NUM_SRC, "g");
 
 const MIXED_UNICODE_RE = new RegExp("^(\\d+)\\s*([" + GLYPHS + "])$");
 
+// Single tokenizer contract: parsing and step-text rewriting must agree on
+// what a number token is, so this is parser's implementation, re-exported.
+import { numberTokenToFraction as _numberTokenToFraction } from "./parser.mjs";
 export function numberTokenToFraction(token) {
-  const t = String(token).trim();
-  let m = MIXED_UNICODE_RE.exec(t);
-  if (m) return add(makeFraction(Number(m[1])), GLYPH_VALUES[m[2]]);
-  if (Object.prototype.hasOwnProperty.call(GLYPH_VALUES, t)) {
-    return { ...GLYPH_VALUES[t] };
-  }
-  m = /^(\d+)\s+(\d+)\/(\d+)$/.exec(t);
-  if (m) {
-    return makeFraction(
-      Number(m[1]) * Number(m[3]) + Number(m[2]),
-      Number(m[3]),
-    );
-  }
-  m = /^(\d+)\u2044(\d+)$/.exec(t) || /^(\d+)\/(\d+)$/.exec(t);
-  if (m) return makeFraction(Number(m[1]), Number(m[2]));
-  if (/^\d+\.\d+$/.test(t)) return fromDecimalString(t);
-  return makeFraction(Number(t));
+  return _numberTokenToFraction(token);
 }
 
 const TEMP_AFTER_RE =

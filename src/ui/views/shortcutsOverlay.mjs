@@ -20,14 +20,12 @@ const GROUPS = [
     rows: [
       ["c", "Cook this recipe"],
       ["e", "Edit this recipe"],
-      ["p", "Print this recipe"],
     ],
   },
   {
     heading: "Cook mode",
     rows: [
       ["\u2190 / \u2192", "Previous / next step"],
-      ["Space", "Next step"],
       ["Esc", "Leave cook mode"],
     ],
   },

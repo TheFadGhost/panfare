@@ -21,7 +21,6 @@ const IRREGULAR_SINGULARS = new Map([
   ["berries", "berry"],
   ["chillies", "chilli"],
   ["chilies", "chili"],
-  ["spice", "spice"],
 ]);
 
 // Regional synonyms collapse to one canonical name (first listed wins).
@@ -33,7 +32,6 @@ const SYNONYMS = new Map([
   ["swede", "rutabaga"],
   ["beet", "beetroot"],
   ["cider vinegar", "apple cider vinegar"],
-  ["garlic powder", "garlic powder"],
 ]);
 
 // Qualifier words that describe grade/size rather than identity. Stripped

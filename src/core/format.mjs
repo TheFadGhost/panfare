@@ -291,13 +291,13 @@ export function formatQuantity(quantity, options = {}) {
   const rendered = renderAmount(value, maxDen);
   const unitText = unitId ? renderUnitText(unitId, value) : "";
   const sep = unitText ? " " : "";
-  const marker = approx || rendered.approx ? "\u2248 " : "";
+  const isApprox = approx || rendered.approx;
   return {
-    text: marker + rendered.bodyText + sep + unitText,
-    html: marker + rendered.bodyHtml + sep + escapeHtml(unitText),
-    aria: rendered.aria + (unitText ? " " + unitText : ""),
+    text: (isApprox ? "\u2248 " : "") + rendered.bodyText + sep + unitText,
+    html: (isApprox ? "\u2248 " : "") + rendered.bodyHtml + sep + escapeHtml(unitText),
+    aria: (isApprox ? "approximately " : "") + rendered.aria + (unitText ? " " + unitText : ""),
     unitId,
-    approx: approx || rendered.approx,
+    approx: isApprox,
   };
 }
 
@@ -319,7 +319,7 @@ export function formatQuantityRange(minQ, maxQ, options = {}) {
   const dash = "\u2013";
   return {
     text: minF.text + dash + strip(maxF.text),
-    html: minF.html + dash + strip(maxF.html).replace(/^(\u2248 )?/, ""),
+    html: minF.html + dash + strip(maxF.html),
     aria: minF.aria + " to " + maxF.aria,
     approx: minF.approx || maxF.approx,
   };
@@ -352,20 +352,25 @@ function renderAmount(value, maxDen) {
     };
   }
   // Nearest friendly fraction with denominator <= maxDen.
+  // Diff between value and candidate = errN / (value.d * cand.d);
+  // candidates compare on that ratio via cross-multiplication.
   let best = null;
   for (let den = 1; den <= Math.min(maxDen, 16); den++) {
     let num = Math.round((value.n * den) / value.d);
     if (num < 0) num = 0;
     const cand = makeFraction(num, den);
+    // |value - cand| as a fraction: |vN*cD - cN*vD| / (vD*cD)
     const errN = Math.abs(value.n * cand.d - cand.n * value.d);
-    if (!best || errN * best.errD < best.errN * cand.d) {
-      best = { value: cand, errN, errD: value.d * den };
+    if (!best || errN * best.errD < best.errN * (value.d * cand.d)) {
+      best = { value: cand, errN, errD: value.d * cand.d };
     }
     if (errN === 0) break;
   }
   const exact = best.errN === 0;
-  // relative error <= 2% renders unmarked; larger error gets "≈"
-  const tinyError = !exact && 50 * best.errN * value.d <= best.errD * value.n;
+  // Relative error <= 2% renders unmarked; anything looser gets "≈".
+  // rel = |vN/vD - cN/cD| / (vN/vD) = errN / (cand.d * vN)
+  // rel <= 1/50  <=>  50*errN <= cand.d * vN
+  const tinyError = !exact && 50 * best.errN <= best.value.d * value.n;
   const approx = !exact && !tinyError;
   const f = formatFraction(best.value);
   return { bodyText: f.text, bodyHtml: f.html, aria: f.aria, approx };

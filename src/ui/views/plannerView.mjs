@@ -35,7 +35,9 @@ function defaultServingsFor(recipeId) {
 
 export function plannerView(container) {
   function recipes() {
-    return (getState().recipes || []).slice().sort((a, b) => a.title.localeCompare(b.title));
+    return (getState().recipes || [])
+      .slice()
+      .sort((a, b) => String(a.title ?? "").localeCompare(String(b.title ?? "")));
   }
 
   function persist(nextPlan) {

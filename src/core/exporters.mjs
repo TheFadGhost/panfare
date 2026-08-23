@@ -372,11 +372,22 @@ function printableListDoc(list, opts) {
     .map((group) => {
       const items = (group.items || [])
         .map((item) => {
+          // Unquantified lines ({amount:null}) are legal merge output; print
+          // them as bare names exactly like the on-screen list does. The
+          // merge engine's own approx flag (density-based merges) is honoured
+          // once — formatQuantity's marker takes precedence when present.
           const qtyText = (item.quantities || [])
-            .map((q) =>
-              (q.approx ? "\u2248 " : "") +
-              formatQuantity({ amount: q.amount, unit: q.unit }, { system: opts.system ?? null }).text,
-            )
+            .filter((q) => q && q.amount)
+            .map((q) => {
+              const rendered = formatQuantity(
+                { amount: q.amount, unit: q.unit },
+                { system: opts.system ?? null }
+              );
+              if (q.approx && !rendered.approx && !rendered.text.startsWith("\u2248 ")) {
+                return "\u2248 " + rendered.text;
+              }
+              return rendered.text;
+            })
             .join(" \u00B7 ");
           const prepText =
             item.preparations && item.preparations.length
