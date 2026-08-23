@@ -189,8 +189,8 @@ export function cookView(container, params) {
     navigate("#/recipe/" + recipe.id);
   }
 
-  const prevBtn = h("button", { class: "btn cook-nav", type: "button", onclick: () => go(-1) }, "Back");
-  const nextBtn = h("button", { class: "btn btn-primary cook-nav", type: "button", onclick: () => go(1) }, "Next");
+  const prevBtn = h("button", { class: "btn", type: "button", onclick: () => go(-1) }, "Back");
+  const nextBtn = h("button", { class: "btn btn-primary", type: "button", onclick: () => go(1) }, "Next");
   const ingToggle = h("button", {
     class: "btn",
     type: "button",

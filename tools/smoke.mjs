@@ -1,4 +1,4 @@
-// smoke.mjs — drives the real app in headless Chrome: loads, seeds,
+// smoke.mjs â€” drives the real app in headless Chrome: loads, seeds,
 // walks every route, exercises scaling + list + planner + cook mode.
 // Captures screenshots for the README. Exit 1 on any failure.
 
@@ -9,7 +9,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const port = 5199;
+const port = 0;
 const types = {
   ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -28,6 +28,7 @@ const server = createServer(async (req, res) => {
   } catch (e) { res.writeHead(500).end(String(e)); }
 });
 await new Promise((r) => server.listen(port, r));
+const realPort = server.address().port;
 
 const shots = join(root, "docs", "shots");
 await mkdir(shots, { recursive: true });
@@ -49,7 +50,7 @@ page.on("console", (msg) => {
   if (msg.type() === "error") console.log("console.error:", msg.text());
 });
 
-await page.goto(`http://localhost:${port}/#/library`, { waitUntil: "networkidle" });
+await page.goto(`http://localhost:${realPort}/#/library`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 
 // first-run empty state with seed button
@@ -99,7 +100,7 @@ await page.keyboard.press("Escape");
 await page.waitForTimeout(300);
 
 // planner: add one slot
-await page.goto(`http://localhost:${port}/#/planner`);
+await page.goto(`http://localhost:${realPort}/#/planner`);
 await page.waitForTimeout(300);
 await page.locator("button:text-is('+ Add meal')").first().click();
 await page.waitForTimeout(150);
@@ -109,7 +110,7 @@ await page.waitForTimeout(250);
 check("planner slot assigned", await page.locator(".slot-title").first().textContent().then((t) => /Carrot/.test(t || "")));
 
 // shopping list from plan
-await page.goto(`http://localhost:${port}/#/list?src=plan`);
+await page.goto(`http://localhost:${realPort}/#/list?src=plan`);
 await page.waitForTimeout(500);
 const sections = await page.locator(".section-heading").count();
 check("list builds sections from plan (" + sections + ")", sections > 0);
@@ -122,7 +123,7 @@ if ((await tickTarget.count()) > 0) {
 await page.screenshot({ path: join(shots, "shopping-list.png"), fullPage: true });
 
 // settings themes
-await page.goto(`http://localhost:${port}/#/settings`);
+await page.goto(`http://localhost:${realPort}/#/settings`);
 await page.waitForTimeout(300);
 await page.check("input[name=pf-theme][value=dark]");
 await page.waitForTimeout(200);
@@ -139,3 +140,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("\nSmoke pass complete.");
+
