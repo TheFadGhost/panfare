@@ -11,6 +11,7 @@
     "regression": "node tools/regression.mjs"
   },
   "devDependencies": {
+    "playwright": "^1.62.1",
     "vitest": "^3.2.4"
   }
 }

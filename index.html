@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panfare — recipes, scaled honestly</title>
+  <meta name="description" content="Local-first recipe manager: exact serving scaling, unit-aware shopping lists, week planner, cook mode." />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="app">
+    <header class="app-header no-print">
+      <nav class="app-nav" aria-label="Main">
+        <a href="#/library" class="brand" data-nav>Panfare</a>
+        <a href="#/library" data-nav>Library</a>
+        <a href="#/list" data-nav>List</a>
+        <a href="#/planner" data-nav>Planner</a>
+        <a href="#/settings" data-nav>Settings</a>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <script type="module" src="/src/ui/app.mjs"></script>
+</body>
+</html>

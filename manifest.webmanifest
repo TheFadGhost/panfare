@@ -1,0 +1,17 @@
+{
+  "name": "Panfare",
+  "short_name": "Panfare",
+  "description": "Local-first recipe manager: exact serving scaling, unit-aware shopping lists, week planner, cook mode.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EF",
+  "theme_color": "#A64B22",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
